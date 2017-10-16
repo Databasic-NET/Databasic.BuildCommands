@@ -1,0 +1,50 @@
+<job>
+	<script language="JScript" src="./WSH/Class.js"></script>
+	<script language="JScript" src="./WSH/String.js"></script>
+	<script language="JScript" src="./WSH/Log.js"></script>
+	<script language="JScript" src="./WSH/Wsh.js"></script>
+	<script language="JScript" src="./WSH/Shell.js"></script>
+	<script language="JScript" src="./BaseBuild.js"></script>
+	<script language="JScript">
+
+		Class.Define('PostBuild', {
+			Constructor: function () {
+				try {
+					var destinationDir = Wsh.Fso.GetFolder("../Databasic.NuGetPackages")
+							.path.replace(/\\/g, '/') + '/',
+						buildPath = WScript.Arguments.Item(0).replace(/\\/gi, '/') + '/',
+						folder = Wsh.Fso.GetFolder(buildPath),
+						filesEnum = new Enumerator(folder.files),
+						fileExt = '',
+						nupkgFiles = [],
+						lastNupkgFile = '';
+					for (; !filesEnum.atEnd() ; filesEnum.moveNext()) {
+						file = Wsh.Fso.GetFile(String(filesEnum.item()));
+						fileExt = String(Wsh.Fso.GetExtensionName(file.Path)).toLowerCase();
+						if (fileExt == 'nupkg') {
+							nupkgFiles.push(file.Name);
+						}
+					}
+					nupkgFiles.sort().reverse();
+					lastNupkgFile = nupkgFiles.shift();
+					Wsh.Fso.CopyFile(
+						buildPath + lastNupkgFile,
+						destinationDir + lastNupkgFile,
+						true // to overwrite existing
+					);
+					for (var i = 0, l = nupkgFiles.length; i < l; i += 1) {
+						try {
+							Wsh.Fso.DeleteFile(buildPath + nupkgFiles[i]);
+						} catch (e) { }
+					}
+					Wsh.WriteLine("PostBuild.wsf - SUCCESS: New NuGet package copied successfully.");
+				} catch (e) {
+					Wsh.Echo("PostBuild.wsf - ERROR: " + e.message + ".");
+				}
+			}
+		});
+		
+		new PostBuild();
+		
+	</script>
+</job>

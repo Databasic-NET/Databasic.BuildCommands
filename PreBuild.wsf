@@ -1,0 +1,34 @@
+<job>
+	<script language="JScript" src="./WSH/Class.js"></script>
+	<script language="JScript" src="./WSH/String.js"></script>
+	<script language="JScript" src="./WSH/Log.js"></script>
+	<script language="JScript" src="./WSH/Wsh.js"></script>
+	<script language="JScript" src="./WSH/Shell.js"></script>
+	<script language="JScript" src="./BaseBuild.js"></script>
+	<script language="JScript">
+
+		Class.Define('PreBuild', {
+			Extend: BaseBuild,
+			mainModuleDirName: 'Databasic',
+			subModuleDirsNameBegin: 'Databasic.',
+			Constructor: function () {
+				try {
+					this.parent();
+					this.loadGlobalVersionNumber();
+					this.completeModuleDirectoriesInfo();
+					this.setUpVersionToAssemblyInfos();
+					this.setUpVersionToNuspecCfgs();
+					this.incrementGlobalVersionNumberRevision();
+					this.storeGlobalVersionNumber();
+					this.cleanDirectory("../Databasic.NuGetPackages");
+					Wsh.WriteLine("PreBuild.wsf - SUCCESS: All version numbers before build updated successfully.");
+				} catch (e) {
+					Wsh.Echo("PreBuild.wsf - ERROR: " + e.message + ".");
+				}
+			}
+		});
+		
+		new PreBuild();
+		
+	</script>
+</job>
