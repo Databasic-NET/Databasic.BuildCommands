@@ -47,7 +47,8 @@ Class.Define('BaseBuild', {
 					dirFullPath: subFolder.path,
 					dirName: subFolder.name,
 					asmInfo: asmInfo,
-					nugetCfg: this._tryToFindNugetConfigFile(subFolder.path)
+					nugetCfg: this._tryToFindNugetConfigFile(subFolder.path),
+					readme: this._tryToFindReadmeFile(subFolder.path)
 				});
 			}
 		}
@@ -56,12 +57,29 @@ Class.Define('BaseBuild', {
 	_tryToFindNugetConfigFile: function (dirFullPath) {
 		var folder = Wsh.Fso.GetFolder(dirFullPath),
 			filesEnum = new Enumerator(folder.files),
+			file = {},
 			fileExt = '',
 			result = '';
 		for (; !filesEnum.atEnd() ; filesEnum.moveNext()) {
 			file = Wsh.Fso.GetFile(String(filesEnum.item()));
 			fileExt = String(Wsh.Fso.GetExtensionName(file.Path)).toLowerCase();
 			if (fileExt == 'nuspec') {
+				result = file.Path;
+				break;
+			}
+		}
+		return result;
+	},
+	_tryToFindReadmeFile: function (dirFullPath) {
+		var folder = Wsh.Fso.GetFolder(dirFullPath),
+			filesEnum = new Enumerator(folder.files),
+			file = {},
+			fileName = '',
+			result = '';
+		for (; !filesEnum.atEnd() ; filesEnum.moveNext()) {
+			file = Wsh.Fso.GetFile(String(filesEnum.item()));
+			fileName = String(file.Name).toUpperCase();
+			if (fileName == 'README.MD') {
 				result = file.Path;
 				break;
 			}
@@ -162,6 +180,34 @@ Class.Define('BaseBuild', {
 				+ nugetCfgContent.substr(valueEnd);
 			break;
 		}
+		return nugetCfgContent;
+	},
+	setUpVersionToReadmes: function () {
+		var readStream = null,
+			writeStream = null,
+			readmeFullPath = '',
+			readmeContent = '';
+		for (var i = 0, l = this.modulesInfo.length; i < l; i += 1) {
+			readmeFullPath = this.modulesInfo[i].readme;
+			if (!readmeFullPath) continue;
+			// open for reading, if file doesn't exists, do not create new
+			readStream = Wsh.Fso.OpenTextFile(readmeFullPath, 1, false);
+			readmeContent = readStream.ReadAll();
+			readStream.Close();
+			readmeContent = this._setUpVersionToReadmeContent(readmeContent);
+			// for overwriting, not as Unicode
+			writeStream = Wsh.Fso.CreateTextFile(readmeFullPath, true, false);
+			writeStream.Write(readmeContent);
+			writeStream.Close();
+		}
+	},
+	_setUpVersionToReadmeContent: function (nugetCfgContent) {
+		nugetCfgContent = nugetCfgContent.replace(/\/Stable\-v([\d]*)\.([\d]*)\.([\d]*)\-brightgreen\.svg/g, function () {
+			var args = [].slice.apply(arguments);
+			args[0] = '/Stable-v' + this.versions[0] + '.' + this.versions[1] + '.' + this.versions[2] + '-brightgreen.svg';
+			return args[0];
+		}.bind(this));
+		//log(nugetCfgContent);
 		return nugetCfgContent;
 	},
 	cleanDirectory: function (relativeOrAbsolutePath, allFiles) {

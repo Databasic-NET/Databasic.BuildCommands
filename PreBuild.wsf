@@ -12,13 +12,14 @@
 			mainModuleDirName: 'Databasic',
 			subModuleDirsNameBegin: 'Databasic.',
 			Constructor: function () {
-				return;
+				//return;
 				try {
 					this.parent();
 					this.loadGlobalVersionNumber();
 					this.completeModuleDirectoriesInfo();
 					this.setUpVersionToAssemblyInfos();
 					this.setUpVersionToNuspecCfgs();
+					this.setUpVersionToReadmes();
 					this.incrementGlobalVersionNumberRevision();
 					this.storeGlobalVersionNumber();
 					this.cleanDirectory("../Databasic.NuGetPackages");
