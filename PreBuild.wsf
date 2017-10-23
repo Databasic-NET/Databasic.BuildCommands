@@ -12,6 +12,7 @@
 			mainModuleDirName: 'Databasic',
 			subModuleDirsNameBegin: 'Databasic.',
 			Constructor: function () {
+				return;
 				try {
 					this.parent();
 					this.loadGlobalVersionNumber();

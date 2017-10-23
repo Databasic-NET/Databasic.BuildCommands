@@ -9,6 +9,7 @@
 
 		Class.Define('PostBuild', {
 			Constructor: function () {
+				//return;
 				try {
 					var destinationDir = Wsh.Fso.GetFolder("../Databasic.NuGetPackages")
 							.path.replace(/\\/g, '/') + '/',
