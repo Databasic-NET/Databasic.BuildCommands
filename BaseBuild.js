@@ -90,8 +90,8 @@ Class.Define('BaseBuild', {
 		var dirFullPath = '';
 		for (var i = 0, l = this.modulesInfo.length; i < l; i += 1) {
 			dirFullPath = this.modulesInfo[i].dirFullPath;
-			this.cleanDirectory(dirFullPath + '/bin/Debug');
-			this.cleanDirectory(dirFullPath + '/bin/Release');
+			this.cleanDirectory(dirFullPath + '/bin/Debug', ['nupkg']);
+			this.cleanDirectory(dirFullPath + '/bin/Release', ['nupkg']);
 		}
 	},
 	setUpVersionToAssemblyInfos: function () {
@@ -149,14 +149,15 @@ Class.Define('BaseBuild', {
 			readStream = Wsh.Fso.OpenTextFile(nugetCfgFullPath, 1, false);
 			nugetCfgContent = readStream.ReadAll();
 			readStream.Close();
-			nugetCfgContent = this._setUpVersionToNugspecCfgContent(nugetCfgContent);
+			nugetCfgContent = this._setUpVersionToNugspecCfgContentVersionNode(nugetCfgContent);
+			nugetCfgContent = this._setUpVersionToNugspecCfgContentDependencyNode(nugetCfgContent);
 			// for overwriting, not as Unicode
 			writeStream = Wsh.Fso.CreateTextFile(nugetCfgFullPath, true, false);
 			writeStream.Write(nugetCfgContent);
 			writeStream.Close();
 		}
 	},
-	_setUpVersionToNugspecCfgContent: function (nugetCfgContent) {
+	_setUpVersionToNugspecCfgContentVersionNode: function (nugetCfgContent) {
 		var index = 0,
 			openingNode = '<version>',
 			closingNode = '</version>',
@@ -179,6 +180,35 @@ Class.Define('BaseBuild', {
 				+ this.versions.join('.')
 				+ nugetCfgContent.substr(valueEnd);
 			break;
+		}
+		return nugetCfgContent;
+	},
+	_setUpVersionToNugspecCfgContentDependencyNode: function (nugetCfgContent) {
+		var index = 0,
+			openingNode = '<dependency id="Databasic',
+			closingNode = '/>',
+			valueBegin = 0,
+			valueEnd = 0,
+			versionStr = '',
+			versionsJoined = this.versions.join('.');
+		while (true) {
+			valueBegin = nugetCfgContent.indexOf(openingNode, index);
+			if (valueBegin == -1) break;
+			valueBegin += openingNode.length;
+			valueEnd = nugetCfgContent.indexOf(closingNode, valueBegin);
+			if (valueEnd == -1) break;
+			versionStr = nugetCfgContent.substring(valueBegin, valueEnd);
+			if (!/version="([0-9\.]*)"/gi.test(versionStr)) {
+				index = valueEnd;
+				continue;
+			}
+			versionStr = versionStr.replace(/version="([0-9\.]*)"/gi, function (m) {
+				return 'version="'+ versionsJoined + '"';
+			});
+			nugetCfgContent = nugetCfgContent.substr(0, valueBegin)
+				+ versionStr
+				+ nugetCfgContent.substr(valueEnd);
+			index = valueBegin + versionStr.length;
 		}
 		return nugetCfgContent;
 	},
@@ -210,15 +240,15 @@ Class.Define('BaseBuild', {
 		//log(nugetCfgContent);
 		return nugetCfgContent;
 	},
-	cleanDirectory: function (relativeOrAbsolutePath, allFiles) {
+	cleanDirectory: function (relativeOrAbsolutePath, extensions) {
 		var folder = Wsh.Fso.GetFolder(relativeOrAbsolutePath),
 			filesEnum = new Enumerator(folder.files),
-			allFiles = !!allFiles,
+			allFiles = extensions == '*',
 			fileExt = '';
 		for (; !filesEnum.atEnd() ; filesEnum.moveNext()) {
 			file = Wsh.Fso.GetFile(String(filesEnum.item()));
 			fileExt = String(Wsh.Fso.GetExtensionName(file.Path)).toLowerCase();
-			if (allFiles || (!allFiles && fileExt == 'nupkg')) {
+			if (allFiles || (!allFiles && extensions.indexOf(fileExt) > -1)) {
 				try {
 					Wsh.Fso.DeleteFile(file.Path);
 				} catch (e) { }

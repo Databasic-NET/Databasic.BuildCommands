@@ -22,7 +22,7 @@
 					this.setUpVersionToReadmes();
 					this.incrementGlobalVersionNumberRevision();
 					this.storeGlobalVersionNumber();
-					this.cleanDirectory("../Databasic.NuGetPackages");
+					this.cleanDirectory("../Databasic.Releases", "*");
 					Wsh.WriteLine("PreBuild.wsf - SUCCESS: All version numbers before build updated successfully.");
 				} catch (e) {
 					Wsh.Echo("PreBuild.wsf - ERROR: " + e.message + ".");

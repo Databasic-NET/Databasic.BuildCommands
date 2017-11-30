@@ -11,9 +11,12 @@
 			Constructor: function () {
 				//return;
 				try {
-					var destinationDir = Wsh.Fso.GetFolder("../Databasic.NuGetPackages")
+					//Wsh.Echo("DEBUG:"+WScript.Arguments.Item(0));
+					//Wsh.Echo("DEBUG:"+WScript.Arguments.Item(1));
+					var destinationDir = Wsh.Fso.GetFolder("../Databasic.Releases")
 							.path.replace(/\\/g, '/') + '/',
 						buildPath = WScript.Arguments.Item(0).replace(/\\/gi, '/') + '/',
+						projectName = WScript.Arguments.Item(1),
 						folder = Wsh.Fso.GetFolder(buildPath),
 						filesEnum = new Enumerator(folder.files),
 						fileExt = '',
@@ -29,9 +32,17 @@
 					nupkgFiles.sort().reverse();
 					lastNupkgFile = nupkgFiles.shift();
 					Wsh.Fso.CopyFile(
-						buildPath + lastNupkgFile,
-						destinationDir + lastNupkgFile,
-						true // to overwrite existing
+						buildPath + lastNupkgFile, destinationDir + lastNupkgFile, true // to overwrite existing
+					);
+					Wsh.Fso.CopyFile(
+						buildPath + projectName + ".dll", destinationDir + projectName + ".dll", true // to overwrite existing
+					);
+					
+					Wsh.Fso.CopyFile(
+						buildPath + projectName + ".pdb", destinationDir + projectName + ".pdb", true // to overwrite existing
+					);
+					Wsh.Fso.CopyFile(
+						buildPath + projectName + ".xml", destinationDir + projectName + ".xml", true // to overwrite existing
 					);
 					for (var i = 0, l = nupkgFiles.length; i < l; i += 1) {
 						try {
@@ -40,7 +51,7 @@
 					}
 					Wsh.WriteLine("PostBuild.wsf - SUCCESS: New NuGet package copied successfully.");
 				} catch (e) {
-					Wsh.Echo("PostBuild.wsf - ERROR: " + e.message + ".");
+					Wsh.Echo("PostBuild.wsf - ERROR: " + e.message + " (" + e.file + ":" + e.line + ").");
 				}
 			}
 		});

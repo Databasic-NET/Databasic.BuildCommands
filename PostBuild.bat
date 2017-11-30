@@ -1,1 +1,1 @@
-@cscript.exe PostBuild.wsf "c:\works\tec\vb\databasic\Databasic.All\bin\Debug\"
+@cscript.exe PostBuild.wsf "c:\works\tec\vb\databasic\Databasic.All\bin\Release\"
